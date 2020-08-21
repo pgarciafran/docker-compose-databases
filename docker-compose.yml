@@ -1,0 +1,45 @@
+version: '2'
+services:
+  percona:
+    image: ${REGISTRY_HOST}:5000/percona:${PERCONA_IMAGE_VERSION}
+    environment:
+      - "MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}"
+      - "DISCOVERY_SERVICE=${ETCD_HOST}"
+      - "CLUSTER_NAME=${CLUSTER_NAME}"
+      - "ETCD_HOST=${ETCD_HOST}"
+      - "DATABASES_NETWORK_NAME=${DATABASES_NETWORK_NAME}"
+      - "affinity:container!=*percona*"
+    volumes:
+      - /data/percona:/var/lib/mysql
+    networks:
+      - database
+      - proxies_middleware
+    restart: always
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://${LOGGING_HOST}"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      - PMA_ARBITRARY=1
+      - "constraint:node==${PHPMYADMIN_NODE}" # Temporaly hardcoded until Docker daemon tags gets done
+    restart: always
+    ports:
+      - ${MANAGEMENT_ADDRESS}:8080:80
+    networks:
+      - database
+    volumes:
+      - /sessions
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://${LOGGING_HOST}"
+
+networks:
+  database:
+    driver: overlay
+  proxies_middleware:
+    external: true
