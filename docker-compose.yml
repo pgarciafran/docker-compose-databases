@@ -1,25 +1,68 @@
-version: '2'
+version: '3.5'
 services:
-  percona:
-    image: ${REGISTRY_HOST}:5000/percona:${PERCONA_IMAGE_VERSION}
+  dbclient:
+    image: alpine
     environment:
-      - "MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}"
-      - "DISCOVERY_SERVICE=${ETCD_HOST}"
-      - "CLUSTER_NAME=${CLUSTER_NAME}"
-      - "DATABASES_NETWORK_NAME=${DATABASES_NETWORK_NAME}"
-      - "affinity:container!=*percona*"
-    volumes:
-      - /data/percona:/var/lib/mysql
+      - BACKUP_ENABLED=1
+      - BACKUP_INTERVAL=3600
+      - BACKUP_PATH=/data/percona
+      - BACKUP_FILENAME=secandsys_bkp
     networks:
-      - database
-      - proxies_middleware
-    restart: always
-    logging:
-      driver: gelf
-      options:
-        gelf-address: "udp://${LOGGING_HOST}"
+      - dbnet
+    entrypoint: |
+      sh -c 'sh -s << EOF
+      apk add --no-cache mysql-client
+      while true
+        do
+          if [ $$BACKUP_ENABLED == 1 ]
+            then
+              sleep $$BACKUP_INTERVAL
+              mkdir -p $$BACKUP_PATH/$$(date +%F)
+              echo "$$(date +%FT%H.%m) - Making Backup to : $$BACKUP_PATH/$$(date +%F)/$$BACKUP_FILENAME-$$(date +%FT%H.%m).sql.gz"
+              mysqldump -u root -ppassword -h dblb --all-databases | gzip > $$BACKUP_PATH/$$(date +%F)/$$BACKUP_FILENAME-$$(date +%FT%H.%m).sql.gz
+              find $$BACKUP_PATH -mtime 7 -delete
+          fi
+        done
+      EOF'
+    volumes:
+      - vol_dbclient:/data/percona
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  dbcluster:
+    image: toughiq/mariadb-cluster
+    networks:
+      - dbnet
+    environment:
+      - DB_SERVICE_NAME=sas
+      - MYSQL_ROOT_PASSWORD=secandsys
+      - MYSQL_DATABASE=secandsys
+      - MYSQL_USER=secandsys
+      - MYSQL_PASSWORD=secandsys
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  dblb:
+    image: toughiq/maxscale
+    networks:
+      - dbnet
+    ports:
+      - 3306:3306
+    environment:
+      - DB_SERVICE_NAME=sas
+      - ENABLE_ROOT_USER=1
+    deploy:
+      mode: replicated
+      replicas: 1
+
+volumes:
+  vol_dbclient:
+    driver: local
+
 networks:
-  database:
+  dbnet:
+    name: dbnet
     driver: overlay
-  proxies_middleware:
-    external: true
+
