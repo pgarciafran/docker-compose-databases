@@ -5,8 +5,8 @@ services:
     environment:
       - BACKUP_ENABLED=1
       - BACKUP_INTERVAL=3600
-      - BACKUP_PATH=/data/percona
-      - BACKUP_FILENAME=secandsys_bkp
+      - BACKUP_PATH=/data
+      - BACKUP_FILENAME=db_backup
     networks:
       - dbnet
     entrypoint: |
@@ -25,7 +25,7 @@ services:
         done
       EOF'
     volumes:
-      - vol_dbclient:/data/percona
+      - vol_dbclient:/data
     deploy:
       mode: replicated
       replicas: 1
@@ -35,11 +35,11 @@ services:
     networks:
       - dbnet
     environment:
-      - DB_SERVICE_NAME=sas
-      - MYSQL_ROOT_PASSWORD=secandsys
-      - MYSQL_DATABASE=secandsys
-      - MYSQL_USER=secandsys
-      - MYSQL_PASSWORD=secandsys
+      - DB_SERVICE_NAME=dbcluster
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=mydb
+      - MYSQL_USER=mydbuser
+      - MYSQL_PASSWORD=mydbpass
     deploy:
       mode: replicated
       replicas: 1
@@ -51,7 +51,7 @@ services:
     ports:
       - 3306:3306
     environment:
-      - DB_SERVICE_NAME=sas
+      - DB_SERVICE_NAME=dbcluster
       - ENABLE_ROOT_USER=1
     deploy:
       mode: replicated
