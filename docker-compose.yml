@@ -7,10 +7,10 @@ services:
     image: percona
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: example
+      MYSQL_ROOT_PASSWORD: s3c4ndsys
 
   adminer:
     image: adminer
     restart: always
     ports:
-      - 8080:8080
+      - 8080:8088
