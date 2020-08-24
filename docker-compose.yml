@@ -37,9 +37,9 @@ services:
     environment:
       - DB_SERVICE_NAME=dbcluster
       - MYSQL_ROOT_PASSWORD=password
-      - MYSQL_DATABASE=mydb
-      - MYSQL_USER=mydbuser
-      - MYSQL_PASSWORD=mydbpass
+      - MYSQL_DATABASE=secandsys
+      - MYSQL_USER=secandsys
+      - MYSQL_PASSWORD=s3c4ndsys
     deploy:
       mode: replicated
       replicas: 1
@@ -65,4 +65,4 @@ networks:
   dbnet:
     name: dbnet
     driver: overlay
-
+    attachable: true
