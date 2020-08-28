@@ -6,6 +6,10 @@ services:
       - 5432
     volumes:
       - /data/postgres:/bitnami/postgresql
+    deploy:
+      placement:
+        constraints:
+          - "node.role==manager"
     environment:
       - POSTGRESQL_POSTGRES_PASSWORD=root
       - POSTGRESQL_USERNAME=secandsys
@@ -18,13 +22,19 @@ services:
       - REPMGR_NODE_NAME=pg-0
       - REPMGR_NODE_NETWORK_NAME=pg-0
       - REPMGR_PORT_NUMBER=5432
-      - "node.hostname==SAS-C1-S1"
+
   pg-1:
     image: docker.io/bitnami/postgresql-repmgr:11-debian-10
     ports:
       - 5432
     volumes:
       - /data/postgres:/bitnami/postgresql
+    #networks: 
+    #  - mw_middleware
+    deploy:
+      placement:
+        constraints:
+          - "node.role==worker"
     environment:
       - POSTGRESQL_POSTGRES_PASSWORD=root
       - POSTGRESQL_USERNAME=secandsys
@@ -37,4 +47,3 @@ services:
       - REPMGR_NODE_NAME=pg-1
       - REPMGR_NODE_NETWORK_NAME=pg-1
       - REPMGR_PORT_NUMBER=5432
-      - "node.hostname==SAS-C1-S2"
