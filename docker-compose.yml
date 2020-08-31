@@ -1,7 +1,7 @@
 version: '3'
 services:
   pg-0:
-          image: 192.168.1.145:5000/db:tfg
+    image: 192.168.1.145:5000/db:tfg
     ports:
       - 5432
     volumes:
